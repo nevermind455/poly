@@ -18,6 +18,8 @@ SETUP:
     PRIVATE_KEY=0x...
     FUNDER_ADDRESS=0x...
     SIGNATURE_TYPE=1
+    TELEGRAM_BOT_TOKEN=...   (optional, for alerts)
+    TELEGRAM_CHAT_ID=...     (optional)
   python real_bot.py
 """
 
@@ -45,6 +47,11 @@ try:
 except ImportError:
     print("ERROR: pip install py-clob-client python-dotenv")
     sys.exit(1)
+
+try:
+    import telegram_alerts
+except ImportError:
+    telegram_alerts = None
 
 # ============================================================
 # CONFIG
@@ -92,6 +99,13 @@ try:
 except Exception as e:
     print(f"[FAIL] {e}")
     sys.exit(1)
+
+def alert(msg):
+    """Send Telegram alert if configured."""
+    if telegram_alerts and telegram_alerts.enabled():
+        telegram_alerts.send(msg)
+
+alert("🤖 Polymarket BTC bot started — VPS 24/7")
 
 # ============================================================
 # CSV
@@ -418,6 +432,7 @@ while True:
                     "sold" if sell_resp else "settle_wait",
                     f"{pl:.4f}", f"{btc:.2f}"
                 ])
+                alert(f"🛑 STOP-LOSS {p['side']} @ {cp*100:.1f}c | P/L: ${pl:.2f} | BTC ${btc:,.0f}")
             else:
                 new_pos.append(p)
         positions = new_pos
@@ -441,6 +456,7 @@ while True:
                 blitz_total += 1
                 window_blitz += 1
                 log_csv([datetime.now().isoformat(), current_slug, "BLITZ", higher_side, higher_token[:25], MAX_TRADE, round(shares, 2), higher_price, resp.get("orderID", ""), "placed", "", f"{btc:.2f}"])
+                alert(f"⚡ BLITZ {higher_side} @ {higher_price*100:.1f}c ${MAX_TRADE} | {win['slug']} | BTC ${btc:,.0f}")
 
         # ============================================
         # FORCED — must trade
@@ -459,6 +475,7 @@ while True:
                 trades_total += 1
                 daily_trades += 1
                 log_csv([datetime.now().isoformat(), current_slug, "FORCED", side, token[:25], MAX_TRADE, round(shares, 2), price, resp.get("orderID", ""), "placed", "", f"{btc:.2f}"])
+                alert(f"📌 FORCED {side} @ {price*100:.1f}c ${MAX_TRADE} | {current_slug} | BTC ${btc:,.0f}")
 
         # ============================================
         # NORMAL BUY
@@ -477,6 +494,7 @@ while True:
                 trades_total += 1
                 daily_trades += 1
                 log_csv([datetime.now().isoformat(), current_slug, "BUY", side, token[:25], MAX_TRADE, round(shares, 2), price, resp.get("orderID", ""), "placed", "", f"{btc:.2f}"])
+                alert(f"✅ BUY {side} @ {price*100:.1f}c ${MAX_TRADE} AI:{ai['sig']} | {current_slug} | BTC ${btc:,.0f}")
 
         # ============================================
         # STATUS
@@ -490,6 +508,7 @@ while True:
 
     except KeyboardInterrupt:
         uptime = datetime.now() - start_time
+        alert(f"🛑 Bot stopped | P/L: ${pnl_total:+.2f} | Today: ${daily_pnl:+.2f} | Trades: {trades_total} ({wins}W/{losses}L)")
         print(f"\n{'='*60}")
         print(f"  BOT STOPPED")
         print(f"  Uptime:  {uptime}")
@@ -504,4 +523,5 @@ while True:
         break
     except Exception as e:
         print(f"  [{ts}] ERROR: {e}")
+        alert(f"❌ Bot ERROR: {e}")
         time.sleep(5)
