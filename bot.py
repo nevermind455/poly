@@ -58,7 +58,10 @@ except ImportError:
 # ============================================================
 PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 FUNDER = os.getenv("FUNDER_ADDRESS", "")
-SIG_TYPE = int(os.getenv("SIGNATURE_TYPE", "1"))
+try:
+    SIG_TYPE = int(os.getenv("SIGNATURE_TYPE", "1"))
+except:
+    SIG_TYPE = 1
 
 if not PRIVATE_KEY or not FUNDER:
     print("ERROR: Set PRIVATE_KEY and FUNDER_ADDRESS in .env")
@@ -219,7 +222,7 @@ def sell_shares(token_id, shares):
 
         # Limit sell slightly below mid for fast fill
         sell_price = round(max(0.01, mid - 0.02), 2)
-        sell_size = max(5.0, round(shares, 2))
+        sell_size = round(shares, 2)
 
         order_args = OrderArgs(
             token_id=token_id,
@@ -461,7 +464,7 @@ while True:
         # ============================================
         # FORCED — must trade (skip if last 7s and would buy under 80¢)
         # ============================================
-        elif in_forced and len(positions) < MAX_POS and not (tl <= BLITZ_SEC and price < BUY_THRESH):
+        elif in_forced and len(positions) < MAX_POS and price >= BUY_THRESH:
             print(f"  [{ts}] >> FORCED {side} @ {price*100:.1f}c ${MAX_TRADE} ({tl}s)")
             resp = buy_shares(token, MAX_TRADE)
             if resp:

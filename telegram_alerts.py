@@ -15,7 +15,8 @@ except ImportError:
     pass
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+_raw_chat = (os.getenv("TELEGRAM_CHAT_ID") or "").strip().strip("'\"")
+TELEGRAM_CHAT_ID = int(_raw_chat) if _raw_chat.lstrip("-").isdigit() else (_raw_chat or "")
 TELEGRAM_API = "https://api.telegram.org/bot"
 
 
@@ -42,4 +43,4 @@ def send(text: str) -> bool:
 
 
 def enabled() -> bool:
-    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID != "" and TELEGRAM_CHAT_ID is not None)
