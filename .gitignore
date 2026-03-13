@@ -28,6 +28,9 @@ trade_log.csv
 run_24_7.bat
 *.bat
 
+# Local dashboard only (not needed on VPS)
+dashbord.py
+
 # OS
 .DS_Store
 Thumbs.db
