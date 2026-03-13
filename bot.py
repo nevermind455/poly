@@ -438,7 +438,7 @@ while True:
         positions = new_pos
 
         # ============================================
-        # BLITZ — max 2 trades per window
+        # BLITZ — last 7s only, never buy under 80¢
         # ============================================
         if in_blitz and higher_price >= BUY_THRESH and window_blitz < BLITZ_MAX:
             print(f"  [{ts}] >>> BLITZ {higher_side} @ {higher_price*100:.1f}c ${MAX_TRADE} ({tl}s) [{window_blitz+1}/{BLITZ_MAX}]")
@@ -459,9 +459,9 @@ while True:
                 alert(f"⚡ BLITZ {higher_side} @ {higher_price*100:.1f}c ${MAX_TRADE} | {win['slug']} | BTC ${btc:,.0f}")
 
         # ============================================
-        # FORCED — must trade
+        # FORCED — must trade (skip if last 7s and would buy under 80¢)
         # ============================================
-        elif in_forced and len(positions) < MAX_POS:
+        elif in_forced and len(positions) < MAX_POS and not (tl <= BLITZ_SEC and price < BUY_THRESH):
             print(f"  [{ts}] >> FORCED {side} @ {price*100:.1f}c ${MAX_TRADE} ({tl}s)")
             resp = buy_shares(token, MAX_TRADE)
             if resp:
