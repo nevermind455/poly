@@ -19,6 +19,15 @@ env/
 *.swp
 *.swo
 
+# Runtime logs (generated on VPS)
+*.csv
+real_trades.csv
+trade_log.csv
+
+# Windows-only (use systemd/cron on VPS)
+run_24_7.bat
+*.bat
+
 # OS
 .DS_Store
 Thumbs.db
